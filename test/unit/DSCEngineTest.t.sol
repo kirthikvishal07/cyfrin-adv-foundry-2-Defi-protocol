@@ -3,12 +3,13 @@
 pragma solidity ^0.8.18;
 
 import {Script} from "forge-std/Script.sol";
+import {DeployDSC} from "script/DeployDSC.s.sol";
 import {Test, console} from "forge-std/Test.sol";
-import {DecentralizedStableCoin} from "../../src/DecentralizedStableCoin.sol";
 import {DSCEngine} from "../../src/DSCEngine.sol";
 import {HelperConfig} from "script/HelperConfig.s.sol";
-import {DeployDSC} from "script/DeployDSC.s.sol";
+import {MockV3Aggregator} from "../mocks/MockV3Aggregator.sol";
 import {ERC20Mock} from "@openzeppelin/contracts/mocks/ERC20Mock.sol";
+import {DecentralizedStableCoin} from "../../src/DecentralizedStableCoin.sol";
 
 contract DSCEngineTest is Test {
     uint256 private constant PRECISION = 1e18;
@@ -20,14 +21,14 @@ contract DSCEngineTest is Test {
     uint256 public deployerKey;
 
     address public USER = makeAddr("user");
+    uint256 public amountToMint = 100 ether;
     uint256 public constant AMOUNT_COLLATERAL = 5 ether;
-    uint256 public constant ZERO_COLLATERAL = 0 ether;
     uint256 public constant STARTING_ERC20_BALANCE = 10 ether;
 
-    DeployDSC deployer;
-    DecentralizedStableCoin dsc;
     DSCEngine dsce;
+    DeployDSC deployer;
     HelperConfig config;
+    DecentralizedStableCoin dsc;
 
     function setUp() public {
         deployer = new DeployDSC();
@@ -113,4 +114,26 @@ contract DSCEngineTest is Test {
         assertEq(totalDscMinted, expectedTotalDscMinted, "Incorrect total DSC minted");
         assertEq(AMOUNT_COLLATERAL, expectedDepositAmount, "Inequality in collateral value");
     }
+
+    // function testRevertsIfMintedDscBreaksHealthFactor() public {
+    //     (, int256 price,,,) = MockV3Aggregator(ethUsdPriceFeed).latestRoundData();
+
+    //     assert(price > 0);
+
+    //     // casting to uint256 is safe because price > 0 is checked above
+    //     // forge-lint: disable-next-line(unsafe-typecast)
+    //     uint256 priceUint256 = uint256(price);
+
+    //     amountToMint = (AMOUNT_COLLATERAL * (priceUint256 * dsce.getAdditionalFeedPrecision())) / dsce.getPrecision();
+
+    //     vm.startPrank(USER);
+    //     ERC20Mock(weth).approve(address(dsce), AMOUNT_COLLATERAL);
+
+    //     uint256 expectedHealthFactor =
+    //         dsce.calculateHealthFactor(amountToMint, dsce.getUsdValue(weth, AMOUNT_COLLATERAL));
+
+    //     vm.expectRevert(abi.encodeWithSelector(DSCEngine.DSCEngine__BreaksHealthFactor.selector, expectedHealthFactor));
+    //     dsce.depositCollateralAndMintDsc(weth, AMOUNT_COLLATERAL, amountToMint);
+    //     vm.stopPrank();
+    // }
 }
